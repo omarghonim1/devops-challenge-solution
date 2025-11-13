@@ -120,4 +120,4 @@ The application includes a seed service (`/seed-data`) that can populate the dat
 - The worker service continuously processes votes from the Redis queue
 - Make sure to handle service startup order properly with health checks
 
-Good luck with your challenge! 🚀
+Good luck with your challenge! 🚀# devops-challenge-solution
