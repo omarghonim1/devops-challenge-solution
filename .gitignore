@@ -1,0 +1,16 @@
+# .gitignore
+
+# Terraform files to ignore
+.terraform/
+*.tfplan
+*.tfstate
+*.tfstate.*
+
+# IDE and Build files (common culprits for large size)
+.idea/
+.vscode/
+build/
+dist/
+*.log
+*.zip
+*.tar
