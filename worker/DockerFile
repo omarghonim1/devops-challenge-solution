@@ -25,4 +25,5 @@ RUN chown -R appuser:appgroup /app
 
 USER appuser
 
+
 CMD ["dotnet", "Worker.dll"]
