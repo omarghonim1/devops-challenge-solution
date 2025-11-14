@@ -1,0 +1,80 @@
+
+services:
+  vote:
+    build: 
+      context: ./vote
+    ports:
+      - "8080:8080"
+    networks:
+      - frontend
+      - backend
+    environment:
+      REDIS_HOST: redis
+      DATABASE_HOST: db
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: postgres
+    depends_on:
+      - redis
+      - db
+  result:
+    build: 
+      context: ./result
+    ports:
+      - "8081:8081"
+    networks:
+      - frontend
+      - backend
+    environment:
+      DATABASE_HOST: db
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: postgres
+    depends_on:
+      - db
+  worker:
+    build: 
+      context: ./worker
+    networks:
+      - backend
+    depends_on:
+      - redis
+      - db
+  redis:
+    image: redis:7-alpine
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: voting
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10  
+
+  seed:
+    build: 
+      context: ./seed-data
+    networks:
+      - backend
+    depends_on:
+      - redis
+      - db
+
+networks:
+  frontend:
+  backend:
+
+volumes:
+  pgdata:
