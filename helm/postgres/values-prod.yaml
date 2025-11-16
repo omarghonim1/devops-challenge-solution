@@ -1,0 +1,13 @@
+auth:
+  username: "postgres"
+  password: "prodpass"
+  database: "postgres"
+
+primary:
+  persistence:
+    enabled: true
+
+fullnameOverride: "postgresql"
+
+commonLabels:
+  app: postgres

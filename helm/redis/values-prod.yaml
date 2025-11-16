@@ -1,0 +1,14 @@
+architecture: standalone
+
+auth:
+  enabled: false
+
+master:
+  persistence:
+    enabled: true
+
+fullnameOverride: "redis"
+
+commonLabels:
+  app: redis
+
