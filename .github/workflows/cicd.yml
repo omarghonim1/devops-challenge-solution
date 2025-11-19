@@ -37,12 +37,12 @@ jobs:
             ./$SVC
         done 
 
-    # - name: Push Docker image
-    #   run: | 
-    #     SERVICES=("vote" "result" "worker")
-    #     TAG=${{ github.sha }}
+    - name: Push Docker image
+      run: | 
+        SERVICES=("vote" "result" "worker")
+        TAG=${{ github.sha }}
 
-    #     for SVC in "${SERVICES[@]}"; do
-    #       echo "Pushing $SVC...."
-    #       docker push ${{ secrets.DOCKERHUB_USERNAME }}/$SVC:$TAG
-    #     done
+        for SVC in "${SERVICES[@]}"; do
+          echo "Pushing $SVC...."
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/$SVC:$TAG
+        done
