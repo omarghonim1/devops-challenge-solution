@@ -5,12 +5,16 @@ on:
     branches: [ "main" ]
 
 jobs:
+
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4 
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
 
     - name: Login to Docker Hub
       uses: docker/login-action@v2
@@ -18,38 +22,27 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    - name: Build & Push Docker images
+    - name: Build image
       run: |
         SERVICES=("vote" "result" "worker")
-        for SVC in "${SERVICES[@]}"; do
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/$SVC:latest ./$SVC
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/$SVC:latest
-        done
+        TAG=${{ github.sha }}
 
-    - name: Update Helm values with latest images
-      run: |
-        for SVC in vote result worker; do
-          sed -i "s|tag:.*|tag: latest|g" helm-chart/$SVC/values.yaml
-        done
+        for SVC in "${SERVICES[@]}"; do 
+          echo "Building image for $SVC"
+          docker buildx build \
+            --cache-from=type=gha \
+            --cache-to=type=gha,mode=max \
+            --tag ${{ secrets.DOCKERHUB_USERNAME }}/$SVC:$TAG \
+            --load \
+            ./$SVC
+        done 
 
-    - name: Save kubeconfig
-      run: |
-        echo "${{ secrets.KUBECONFIG_BASE64 }}" | base64 --decode > ./kubeconfig
-        mkdir -p ~/.kube
-        mv kubeconfig ~/.kube/config
+    # - name: Push Docker image
+    #   run: | 
+    #     SERVICES=("vote" "result" "worker")
+    #     TAG=${{ github.sha }}
 
-    - name: Install kubectl
-      uses: azure/setup-kubectl@v4
-
-    - name: Install Helm
-      uses: azure/setup-helm@v4
-
-    - name: Deploy using Helm
-      run: |
-        helm upgrade --install vote-app ./helm-chart \
-          --namespace default --create-namespace
-
-    - name: Verify rollout
-      run: |
-        kubectl rollout status deployment/vote-app --timeout=120s
-
+    #     for SVC in "${SERVICES[@]}"; do
+    #       echo "Pushing $SVC...."
+    #       docker push ${{ secrets.DOCKERHUB_USERNAME }}/$SVC:$TAG
+    #     done
