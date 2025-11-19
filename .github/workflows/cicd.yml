@@ -4,6 +4,10 @@ on:
   push:
     branches: [ "staging" ]
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
 
   build:
@@ -88,34 +92,28 @@ jobs:
           image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/vote:${{ github.sha }}
           format: 'table'
           exit-code: '0'
+
   deploy:
-    runs-on: ubuntu-latest
+    runs-on : ubuntu-latest
     needs: security-scan
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
+      - name: AWS Auth
         uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-        
-      - name: Update kubeconfig
-        run : |
-          aws eks update-kubeconfig --name eks-dev-cluster --region ${{ secrets.AWS_REGION }}
+        with: 
+           role-to-assume: arn:aws:iam::638596943032:role/GitHub-ActionsD
+           aws-region: us-east-1
 
-      - name: Deploy using Helm
-        run : |
-          helm upgrade --install vote-app ./helm/vote-app-chart \
-          --namespace staging \
-          --create-namespace \
-          --set image.vote.tag=${{ github.sha }} \
-          --set image.result.tag=${{ github.sha }} \
-          --set image.worker.tag=${{ github.sha }}
+      - run: aws eks update-kubeconfig --name eks-dev-cluster --region us-east-1
 
-  
+      - run: |
+          helm upgrade --install vote-app-staging ./helm/vote-app-chart \
+            --namespace staging --create-namespace \
+            --set vote.image.tag=${{ github.sha }} \
+            --set result.image.tag=${{ github.sha }} \
+            --set worker.image.tag=${{ github.sha }}
+
+
 
 
