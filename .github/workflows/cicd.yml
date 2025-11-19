@@ -60,6 +60,9 @@ jobs:
         with:
           python-version: "3.10"
       
+      - name: Set PYTHONPATH
+        run:  echo "PYTHONPATH=$PYTHONPATH:$(pwd)/vote" >> $GITHUB_ENV
+      
       - name: Install dependencies
         run: |
           pip install -r vote/requirements.txt
