@@ -1,6 +1,7 @@
 import pytest
 from vote.app import app
 
+
 @pytest.fixture
 def client():
     app.testing = True
