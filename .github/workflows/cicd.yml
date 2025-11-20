@@ -11,48 +11,27 @@ permissions:
 jobs:
 
   build:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4 
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
+    - name: Set Docker to use Minikube
+      run: eval $(minikube docker-env)
 
-    - name: Login to Docker Hub
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-    - name: Build image
+    - name: Build images inside Minikube
       run: |
         SERVICES=("vote" "result" "worker")
         TAG=${{ github.sha }}
 
         for SVC in "${SERVICES[@]}"; do 
           echo "Building image for $SVC"
-          docker buildx build \
-            --cache-from=type=gha \
-            --cache-to=type=gha,mode=max \
-            --tag ${{ secrets.DOCKERHUB_USERNAME }}/$SVC:$TAG \
-            --load \
-            ./$SVC
-        done 
-
-    - name: Push Docker image
-      run: | 
-        SERVICES=("vote" "result" "worker")
-        TAG=${{ github.sha }}
-
-        for SVC in "${SERVICES[@]}"; do
-          echo "Pushing $SVC...."
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/$SVC:$TAG
+          docker build --tag $SVC:$TAG ./$SVC 
         done
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: build
 
     steps:
@@ -65,8 +44,7 @@ jobs:
           python-version: "3.10"
       
       - name: Set PYTHONPATH
-        run: |  
-          echo "PYTHONPATH=$PYTHONPATH:$(pwd)/vote" >> $GITHUB_ENV
+        run: echo "PYTHONPATH=$PYTHONPATH:$(pwd)/vote" >> $GITHUB_ENV
       
       - name: Install dependencies
         run: |
@@ -74,46 +52,40 @@ jobs:
           pip install pytest
 
       - name: Run tests
-        run: |
-          pytest -q 
+        run: pytest -q  
 
 
   security-scan:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: test
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Run Trivy scan on images
-        uses: aquasecurity/trivy-action@master
-        with: 
-          image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/vote:${{ github.sha }}
-          format: 'table'
-          exit-code: '0'
+      - name: Install Trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
+
+      - name: Trivy FS Scan
+        run: trivy fs --exit-code 0 --severity HIGH,CRITICAL .
+
 
   deploy:
-    runs-on : ubuntu-latest
+    runs-on : self-hosted
     needs: security-scan
+    
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: AWS Auth
-        uses: aws-actions/configure-aws-credentials@v4
-        with: 
-           role-to-assume: arn:aws:iam::638596943032:role/GitHub-ActionsD
-           aws-region: us-east-1
+      - name: Use Minikube context
+        run: kubectl config use-context minikube
 
-      - run: aws eks update-kubeconfig --name eks-dev-cluster --region us-east-1
-
-      - run: |
-          helm upgrade --install vote-app-staging ./helm/vote-app-chart \
+      - name: Deploy with Helm to Minikube
+        run: |
+          helm upgrade --install vote-app ./helm/vote-app-chart \
             --namespace staging --create-namespace \
             --set vote.image.tag=${{ github.sha }} \
             --set result.image.tag=${{ github.sha }} \
             --set worker.image.tag=${{ github.sha }}
-
-
-
-
