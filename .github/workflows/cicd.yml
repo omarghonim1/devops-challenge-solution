@@ -33,15 +33,12 @@ jobs:
   test:
     runs-on: self-hosted
     needs: build
+    container:
+      image: python:3.10-slim
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
       
       - name: Set PYTHONPATH
         run: echo "PYTHONPATH=$PYTHONPATH:$(pwd)/vote" >> $GITHUB_ENV
