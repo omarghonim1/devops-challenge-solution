@@ -83,7 +83,7 @@ jobs:
 
       - name: Deploy Helm Chart
         run: |
-          helm upgrade --install vote-app ./vote-app-chart \
+          helm upgrade --install vote-app ./helm/vote-app-chart \
           --namespace dev --create-namespace \
           --set vote.image.repository=${{ secrets.DOCKERHUB_USERNAME }}/vote \
           --set vote.image.tag=${{ github.sha }} \
