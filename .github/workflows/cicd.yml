@@ -91,6 +91,8 @@ jobs:
           --set result.image.tag=${{ github.sha }} \
           --set worker.image.repository=${{ secrets.DOCKERHUB_USERNAME }}/worker \
           --set worker.image.tag=${{ github.sha }} \
+          --set postgres.password="mysecurepassword" \
+          --wait --timeout 5m
         
       - name: Verify Pods
         run: |
