@@ -1,15 +1,23 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Release.Name }}-service
-  labels:
-    app: {{ .Release.Name }}
+  name: {{ .Release.Name }}-vote
 spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.vote.containerPort }}
   selector:
-    app: {{ .Release.Name }}
+    app: vote
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-result
+spec:
+  type: ClusterIP
   ports:
     - port: {{ .Values.service.port }}
       targetPort: {{ .Values.containerPort }}
-      protocol: TCP
-  type: ClusterIP
-  
+  selector:
+    app: result

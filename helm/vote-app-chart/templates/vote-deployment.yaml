@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-vote
+  labels:
+    app: vote
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: vote
+  template:
+    metadata:
+      labels:
+        app: vote
+    spec:
+      containers:
+        - name: vote
+          image: "{{ .Values.vote.image.repository }}:{{ .Values.vote.image.tag }}"
+          imagePullPolicy: Always
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL 
+            seccompProfile:
+              type: RuntimeDefault
+          ports:
+            - containerPort: {{ .Values.vote.containerPort }}
+
+          livenessProbe:
+            httpGet:
+              path: /   
+              port: {{ .Values.vote.containerPort }}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+
+            
+          readinessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.vote.containerPort }}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            
+          env:
+            - name: REDIS_HOST
+              value: "{{ .Values.redis.host }}"
+          resources:
+{{ toYaml .Values.resources | indent 12 }}

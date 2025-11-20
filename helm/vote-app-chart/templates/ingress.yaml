@@ -7,13 +7,13 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: ""
+    - host: vote.dev.local
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: {{ .Release.Name }}-service
+                name: vote-app-vote
                 port:
                   number: {{ .Values.service.port }}

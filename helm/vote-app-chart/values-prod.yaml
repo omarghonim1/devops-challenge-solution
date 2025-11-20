@@ -22,7 +22,7 @@ redis:
 
 postgres:
   host: "postgres.prod.svc.cluster.local"
-  password: "prodpass"
+  password: ""
 
 ingress:
   host: "vote.prod.local"

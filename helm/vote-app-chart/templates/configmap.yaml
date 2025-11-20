@@ -3,5 +3,5 @@ kind: ConfigMap
 metadata:
   name: {{ .Release.Name }}-config
 data:
-  REDIS_URL: "redis://redis:6379/0"
+  REDIS_HOST: "{{ .Values.redis.host }}"
   POSTGRES_HOST: "{{ .Values.postgres.host }}"
