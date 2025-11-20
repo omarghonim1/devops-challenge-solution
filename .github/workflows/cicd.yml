@@ -48,8 +48,9 @@ jobs:
           pip install pytest
       - name: Run tests
         run: |
-          export PYTHONPATH=$PYTHONPATH:$(pwd)
-          pytest -q  
+          touch vote/__init__.py
+          export PYTHONPATH=$PYTHONPATH:.
+          python -m pytest -q  
 
 
   security-scan:
