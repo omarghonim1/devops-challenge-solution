@@ -34,10 +34,17 @@ resources:
 
 redis:
   host: "vote-app-redis-master"
+  persistence:
+    enabled: true
+    size: 1Gi
 
 postgres:
   host: "postgres"
   password: ""
+  persistence:
+    enabled: true
+    size: 1Gi
+    storageClass: standard
 
 ingress:
   enabled: true
