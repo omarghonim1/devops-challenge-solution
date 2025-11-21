@@ -1,0 +1,27 @@
+
+replicaCount: 2
+
+resources:
+  requests:
+    memory: "128Mi"
+    cpu: "100m"
+  limits:
+    memory: "256Mi"
+    cpu: "500m"
+
+
+ingress:
+  enabled: true
+  host: "vote.production.com" 
+
+
+postgres:
+  persistence:
+    enabled: true
+    size: 5Gi  
+    storageClass: standard
+
+redis:
+  persistence:
+    enabled: true
+    size: 2Gi
