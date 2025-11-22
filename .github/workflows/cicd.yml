@@ -42,6 +42,15 @@ jobs:
       image: python:3.10-slim
     steps:
       - uses: actions/checkout@v4
+
+      - name: Cache Pip Dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('vote/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+              
       - name: Install dependencies
         run: |
           pip install -r vote/requirements.txt
@@ -57,6 +66,15 @@ jobs:
     needs: test
     steps:
       - uses: actions/checkout@v4
+
+      - name: Cache Trivy DB
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/trivy
+          key: ${{ runner.os }}-trivy-db-v2024-11
+          restore-keys: |
+            ${{ runner.os }}-trivy-
+  
       - name: Install Trivy
         run: |
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
@@ -78,8 +96,24 @@ jobs:
           cpus: 2
           memory: 4000m
 
+      - name: Wait for Ingress Webhook Readiness
+        run : |
+          echo "Waiting for Nginx Ingress Controller Admission Webhook to be ready..."
+          kubectl wait --namespace ingress-nginx \
+            --for=condition=ready pod \
+            --selector=app.kubernetes.io/component=controller \
+            --timeout=180s 
+
       - name: Install Helm
         uses: azure/setup-helm@v3
+
+      - name: Wait for Ingress Webhook Readiness
+        run: |
+          echo "Waiting for Nginx Ingress Controller Admission Webhook to be ready..."
+          kubectl wait --namespace ingress-nginx \
+            --for=condition=ready pod \
+            --selector=app.kubernetes.io/component=controller \
+            --timeout=180s
 
       - name: Deploy Helm Chart
         run: |
