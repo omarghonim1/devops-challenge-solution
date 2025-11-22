@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vote-app-vote
+  labels:
+    app: vote
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vote
+  template:
+    metadata:
+      labels:
+        app: vote
+    spec:
+      containers:
+        - name: vote
+          image: "omarghonim/vote:latest"
+          imagePullPolicy: Always
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL 
+            seccompProfile:
+              type: RuntimeDefault
+          ports:
+            - containerPort: 8080
+
+          livenessProbe:
+            httpGet:
+              path: /   
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+
+            
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            
+          env:
+            - name: REDIS_HOST
+              value: "vote-app-redis-master"
+          resources:
+            limits:
+              cpu: 300m
+              memory: 256Mi
+            requests:
+              cpu: 150m
+              memory: 128Mi
